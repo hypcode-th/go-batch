@@ -2,28 +2,32 @@ package logger
 
 import (
 	"github.com/sirupsen/logrus"
+	"io"
+	"os"
 )
 
 type LogLevel int
 
 const (
-	Info   LogLevel = iota
-	Debug		
+	Silent LogLevel = iota - 1
+	Info
+	Debug
+	Error
 )
 
 type Logger struct {
-	log 	*logrus.Logger
+	log *logrus.Logger
 }
 
 func NewLogger() *Logger {
 	log := logrus.New()
 
 	log.SetFormatter(&logrus.TextFormatter{
-		DisableColors:   false,
-		ForceColors:     true,
+		DisableColors:    false,
+		ForceColors:      true,
 		DisableTimestamp: true,
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
+		TimestampFormat:  "2006-01-02 15:04:05",
+		FullTimestamp:    true,
 	})
 
 	return &Logger{
@@ -32,8 +36,18 @@ func NewLogger() *Logger {
 }
 
 func (l *Logger) SetLogLevel(level LogLevel) {
-	if level == Debug {
-		l.log.Level = logrus.DebugLevel
+	if level == Silent {
+		l.log.Out = io.Discard
+	} else {
+		l.log.Out = os.Stderr
+		switch level {
+		case Info:
+			l.log.Level = logrus.InfoLevel
+		case Debug:
+			l.log.Level = logrus.DebugLevel
+		case Error:
+			l.log.Level = logrus.ErrorLevel
+		}
 	}
 }
 
